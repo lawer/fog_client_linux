@@ -2,7 +2,25 @@ import cuisine as c
 import requests
 import re
 import logging
-logger = logging.getLogger("fog_client")
+
+def setup_logger(name):
+    requests_log = logging.getLogger("requests")
+    requests_log.setLevel(logging.WARNING)
+
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.INFO)
+    rfh = logging.handlers.RotatingFileHandler("/var/log/" + name + ".log",
+                                                   maxBytes=8192,
+                                                   backupCount=5,
+                                                   mode='w')
+    ch = logging.StreamHandler()
+    formatter = logging.Formatter(fmt="%(levelname)s:%(asctime)s:%(message)s",
+                                  datefmt='%d/%m/%Y-%I:%M:%S')
+    rfh.setFormatter(formatter)
+    ch.setFormatter(formatter)
+    logger.addHandler(rfh)
+    logger.addHandler(ch)
+    return logger
 
 
 def load_conf(filename):

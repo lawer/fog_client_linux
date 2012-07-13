@@ -21,22 +21,20 @@ def download_snapin(mac, name, job, dirname=SNAPIN_DIR):
     r = fog_request("snapins.file",
                     {"mac": mac, "taskid": job})
     with c.mode_local():
-        with c.mode_sudo():
-            filename = dirname + name
-            with open(filename, "wb") as snapin_file:
-                snapin_file.write(r.content)
-                return filename
+        filename = dirname + name
+        with open(filename, "wb") as snapin_file:
+            snapin_file.write(r.content)
+        return filename
 
 
 def exec_snapin(name, run_with="", args="",
                 run_with_args=""):
     with c.mode_local():
-        with c.mode_sudo():
-            c.file_ensure(name, mode="700")
-            line = " ".join([run_with, run_with_args, name, args])
-            print line
-            r_code = subprocess.call(line, shell=True)
-            return r_code
+        c.file_ensure(name, mode="700")
+        line = " ".join([run_with, run_with_args, name, args])
+        print line
+        r_code = subprocess.call(line, shell=True)
+        return r_code
 
 
 def client_snapin(mac, fog_host, snapin_dir):
