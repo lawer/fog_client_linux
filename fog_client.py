@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-import logging
-import logging.handlers
 import time
 import itertools as it
+import functools
 from components import client_hostname, client_snapin
 from fog_lib import get_macs, load_conf, get_logger
 

@@ -29,14 +29,16 @@ def ensure_hostname(host):
         set_hostname(host)
         return True, True
     else:
+        logger.info("Hostname was not changed")
         return False, False
 
 
 def client_hostname(mac, conf):
     fog_host = conf.get("GENERAL", "fog_host")
 
-    params = {"mac": mac}
-    r = fog_request("hostname", fog_host=fog_host, args=params)
+    client_instance = functools.partial(fog_request, fog_host=fog_host, mac=mac)
+
+    r = client_instance("hostname")
     data = r.text.splitlines()[0]
     try:
         status, hostname = data.split('=')

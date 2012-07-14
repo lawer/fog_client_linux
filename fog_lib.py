@@ -2,8 +2,11 @@ import cuisine as c
 import requests
 import re
 import logging
+import logging.handlers
+
 
 FOG_OK = "#!ok"
+
 
 def get_logger(name):
     requests_log = logging.getLogger("requests")
@@ -12,9 +15,9 @@ def get_logger(name):
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
     rfh = logging.handlers.RotatingFileHandler("/var/log/" + name + ".log",
-                                                   maxBytes=8192,
-                                                   backupCount=5,
-                                                   mode='w')
+                                               maxBytes=8192,
+                                               backupCount=5,
+                                               mode='w')
     ch = logging.StreamHandler()
     formatter = logging.Formatter(fmt="%(levelname)s:%(asctime)s:%(message)s",
                                   datefmt='%d/%m/%Y-%I:%M:%S')
@@ -37,16 +40,17 @@ def load_conf(filename, defaults={}):
             conf.write(conf_file)
     return conf
 
+
 def reboot():
     with c.mode_local():
         with c.mode_sudo():
-            c.run("reboot")
+            c.run("reboot") 
 
 
-def fog_request(service, fog_host, args={}):
+def fog_request(service, fog_host, *args, **kwargs):
     r = requests.get("http://{}/fog/service/{}.php".format(
                     fog_host, service),
-                     params=args)
+                    params=kwargs)
     return r
 
 
