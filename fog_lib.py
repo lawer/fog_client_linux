@@ -44,7 +44,8 @@ def reboot():
 
 
 def fog_request(service, fog_host, args={}):
-    r = requests.get("http://%(fog_host)s/fog/service/%(service)s.php",
+    r = requests.get("http://{}/fog/service/{}.php".format(
+                    fog_host, service),
                      params=args)
     return r
 
@@ -53,10 +54,10 @@ def fog_response_dict(r):
     status = r.text.splitlines()[0]
     data_dict = {}
     if status == FOG_OK:
-
         data = r.text.splitlines()[1:]
         data_list = map(lambda x: x.split("="), data)
-        data_lower = map(lambda x: (x[0].lower(), x[1]), data_list)
+        data_lower = map(lambda x: (x[0].lower().replace('snapin',''), x[1]), 
+                                   data_list)
         data_dict = dict(data_lower)
         print data_dict
     data_dict["status"] = status

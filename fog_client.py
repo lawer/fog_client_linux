@@ -4,7 +4,7 @@ import logging.handlers
 import time
 import itertools as it
 from components import client_hostname, client_snapin
-from fog_lib import get_macs, load_conf, setup_logger
+from fog_lib import get_macs, load_conf, get_logger
 
 
 def main():
@@ -22,8 +22,11 @@ def main():
 
     while True:
         time.sleep(5)
-        for func, mac in it.product(services, macs)
-            func(mac, conf)
+        for func, mac in it.product(services, macs):
+            status, reboot = func(mac, conf)
+            logger.info("Service did changes={status} reboot={reboot}".format(
+                status=status, reboot=reboot))
+
 
 if __name__ == '__main__':
     main()
