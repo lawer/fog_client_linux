@@ -59,9 +59,10 @@ def fog_response_dict(r):
     data_dict = {}
     if status == FOG_OK:
         data = r.text.splitlines()[1:]
-        data_lower = map(lambda x: x.lower(), data)
-        data_list = map(lambda x: x.split("="), data_lower)
-        data_dict = dict(data_list)
+        data_list = map(lambda x: x.split("="), data)
+        data_lower = map(lambda x: (x[0].lower(), x[1]), data_list)
+        data_dict = dict(data_lower)
+        print data_dict
     data_dict["status"] = status
     return data_dict
 
