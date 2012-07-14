@@ -3,7 +3,9 @@ import requests
 import re
 import logging
 
-def setup_logger(name):
+FOG_OK = "#!ok"
+
+def get_logger(name):
     requests_log = logging.getLogger("requests")
     requests_log.setLevel(logging.WARNING)
 
@@ -23,24 +25,17 @@ def setup_logger(name):
     return logger
 
 
-def load_conf(filename):
+def load_conf(filename, defaults={}):
     import ConfigParser
-    conf = ConfigParser.SafeConfigParser({"fog_host": "localhost",
-                                          "snapin_dir": "/tmp/"})
+    conf = ConfigParser.SafeConfigParser(defaults)
 
-    obert = conf.read('/etc/fog_client.ini')
+    obert = conf.read(filename)
 
     if not obert:
-        with open('/etc/fog_client.ini', 'w') as conf_file:
+        with open(filename, 'w') as conf_file:
             conf.add_section('GENERAL')
             conf.write(conf_file)
     return conf
-
-conf = load_conf('/etc/fog_client.ini')
-FOG_HOST = conf.get("GENERAL", "fog_host")
-SNAPIN_DIR = conf.get("GENERAL", "snapin_dir")
-FOG_OK = "#!ok"
-
 
 def reboot():
     with c.mode_local():
@@ -48,8 +43,8 @@ def reboot():
             c.run("reboot")
 
 
-def fog_request(service, args=None, fog_host=FOG_HOST):
-    r = requests.get("http://%s/fog/service/%s.php" % (fog_host, service),
+def fog_request(service, fog_host, args={}):
+    r = requests.get("http://%(fog_host)s/fog/service/%(service)s.php",
                      params=args)
     return r
 
@@ -58,7 +53,7 @@ def fog_response_dict(r):
     status = r.text.splitlines()[0]
     data_dict = {}
     if status == FOG_OK:
-        
+
         data = r.text.splitlines()[1:]
         data_list = map(lambda x: x.split("="), data)
         data_lower = map(lambda x: (x[0].lower(), x[1]), data_list)
@@ -75,5 +70,5 @@ def get_macs():
         ifconfig = c.run("ifconfig")
         macs = [mac_re_comp.search(line).group()
                 for line in ifconfig.splitlines()
-                if 'HW' in line]
+                if 'HW' in line and 'eth' in line]
         return macs

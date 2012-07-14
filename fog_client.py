@@ -2,17 +2,18 @@
 import logging
 import logging.handlers
 import time
-from components import client_hostname
-from components import client_snapin
+import itertools as it
+from components import client_hostname, client_snapin
 from fog_lib import get_macs, load_conf, setup_logger
 
-def main():
-    logger = setup_logger("fog_client")
-    macs = get_macs()
 
-    conf = load_conf('/etc/fog_client.ini')
-    fog_host = conf.get("GENERAL", "fog_host")
-    snapin_dir = conf.get("GENERAL", "snapin_dir")
+def main():
+    logger = get_logger("fog_client")
+    macs = get_macs()
+    services = [client_hostname, client_snapin]
+
+    conf = load_conf('/etc/fog_client.ini', {"fog_host": "localhost",
+                                             "snapin_dir": "/tmp/"})
 
     print "service started"
     logger.info("Service started")
@@ -21,9 +22,8 @@ def main():
 
     while True:
         time.sleep(5)
-        for mac in macs:
-            client_hostname(mac, fog_host)
-            client_snapin(mac, fog_host, snapin_dir)
+        for func, mac in it.product(services, macs)
+            func(mac, conf)
 
 if __name__ == '__main__':
     main()

@@ -3,7 +3,6 @@ import logging
 from fog_lib import fog_request
 logger = logging.getLogger("fog_client")
 
-
 def get_hostname():
     with c.mode_local():
         host = c.run("hostname")
@@ -28,13 +27,15 @@ def ensure_hostname(host):
         set_hostname(host)
 
 
-def client_hostname(mac, fog_host):
+def client_hostname(mac, conf):
+    fog_host = conf.get("GENERAL", "fog_host")
+
     params = {"mac": mac}
-    r = fog_request("hostname", params, fog_host)
+    r = fog_request("hostname", fog_host=fog_host, params=params)
     data = r.text.splitlines()[0]
     try:
         status, hostname = data.split('=')
-        if status == "#!ok":
+        if status == FOG_OK:
             ensure_hostname(hostname)
     except ValueError:
         pass
