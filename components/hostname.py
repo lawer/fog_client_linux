@@ -1,6 +1,6 @@
 import cuisine as c
 import logging
-from fog_lib import fog_request
+import functools
 logger = logging.getLogger("fog_client")
 
 FOG_OK = "#!ok"
@@ -32,17 +32,19 @@ def ensure_hostname(host):
         logger.info("Hostname was not changed")
         return False, False
 
+def handler(text):
+    if FOG_OK not in text:
+        return False, None
+    else:
+        lines = text.splitlines()
+        status, hostname = lines[0].split('=')
+        return True, hostname
 
-def client_hostname(mac, conf):
-    fog_host = conf.get("GENERAL", "fog_host")
 
-    client_instance = functools.partial(fog_request, fog_host=fog_host, mac=mac)
-
-    r = client_instance("hostname")
-    data = r.text.splitlines()[0]
-    try:
-        status, hostname = data.split('=')
-        if status == FOG_OK:
-            return ensure_hostname(hostname)
-    except ValueError:
+def client_hostname(client_instance, conf):
+    success, hostname = client_instance(service="hostname",
+                                        handler=handler)
+    if success:
+        return ensure_hostname(hostname)
+    else:
         return False, False

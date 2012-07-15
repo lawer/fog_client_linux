@@ -1,11 +1,20 @@
 import cuisine as c
 import requests
 import re
+import os
 import logging
 import logging.handlers
 
-
 FOG_OK = "#!ok"
+
+def logged_in():
+    try:
+        if ':0' in os.listdir('/var/run/lightdm/root'):
+            return True
+        else:
+            return False
+    except OSError:
+        return True
 
 
 def get_logger(name):
@@ -41,17 +50,22 @@ def load_conf(filename, defaults={}):
     return conf
 
 
-def reboot():
+def shutdown(mode="reboot"):
     with c.mode_local():
-        with c.mode_sudo():
-            c.run("reboot") 
+        if mode=="reboot":
+            c.run("reboot")
+        else:
+            c.run("halt") 
 
 
-def fog_request(service, fog_host, *args, **kwargs):
+def fog_request(service, fog_host, handler=None, *args, **kwargs):
     r = requests.get("http://{}/fog/service/{}.php".format(
                     fog_host, service),
                     params=kwargs)
-    return r
+    if handler is not None:
+        return handler(r.text)
+    else:
+        return r
 
 
 def fog_response_dict(r):

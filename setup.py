@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(name='fog_client',
-      version='0.0.10',
+      version='0.0.11',
       author='Carles Gonzalez',
       packages=['components'],
       py_modules=['fog_lib'],
@@ -13,7 +13,7 @@ setup(name='fog_client',
              'Development Status :: 3 - Alpha',
              'Environment :: Console',
              'Intended Audience :: System Administrators',
-             'License :: OSI Approved :: Python Software Foundation License',
+             'License :: OSI Approved :: BSD',
              'Operating System :: POSIX',
              'Programming Language :: Python',
              'Topic :: System :: Systems Administration'])

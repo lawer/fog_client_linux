@@ -1,6 +1,6 @@
 import cuisine as c
 import subprocess
-from fog_lib import fog_request, fog_response_dict
+from fog_lib import fog_response_dict
 import functools
 import logging
 logger = logging.getLogger("fog_client")
@@ -44,21 +44,18 @@ def install_snapin(instance, snapin, snapin_dir):
         reboot = True if snapin["bounce"] == 1 else False 
         return return_code, return_code == 0, reboot
 
-def client_snapin(mac, conf):
-    fog_host = conf.get("GENERAL", "fog_host")
+def client_snapin(client_instance, conf):
     snapin_dir = conf.get("GENERAL", "snapin_dir")
-    
-    instance = functools.partial(fog_request, fog_host=fog_host, mac=mac)
 
-    snapin = check_snapin(instance)
+    snapin = check_snapin(client_instance)
     if snapin:
-        return_code, action, reboot = install_snapin(instance=instance,
+        return_code, action, reboot = install_snapin(instance=client_instance,
                                                      snapin=snapin,
                                                      snapin_dir=snapin_dir)
         logger.info("Installed " + snapin["filename"] +
                     " with returncode " + str(return_code))
     else:
-        logger.info("No snapins to install on mac " + mac)
+        logger.info("No snapins to install on mac")
         action, reboot = False, False
     return action, reboot
 
