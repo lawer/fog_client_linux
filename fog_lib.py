@@ -2,10 +2,15 @@ import cuisine as c
 import requests
 import re
 import os
+import ConfigParser
 import logging
 import logging.handlers
 
 FOG_OK = "#!ok"
+
+def plugins(prefix):
+    return False
+
 
 def logged_in():
     try:
@@ -38,7 +43,6 @@ def get_logger(name):
 
 
 def load_conf(filename, defaults={}):
-    import ConfigParser
     conf = ConfigParser.SafeConfigParser(defaults)
 
     obert = conf.read(filename)

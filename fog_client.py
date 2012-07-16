@@ -9,6 +9,7 @@ from fog_lib import get_macs, load_conf, get_logger, shutdown, fog_request
 
 def main():
     logger = get_logger("fog_client")
+    
     macs = get_macs()
     services = [client_hostname, client_snapin, 
                 client_task_reboot, client_green_fog]

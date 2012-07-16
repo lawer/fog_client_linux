@@ -1,6 +1,5 @@
 import cuisine as c
 import logging
-import functools
 logger = logging.getLogger("fog_client")
 
 FOG_OK = "#!ok"

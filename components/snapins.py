@@ -1,6 +1,6 @@
 import cuisine as c
 import subprocess
-from fog_lib import fog_response_dict
+from fog_lib import fog_request, fog_response_dict
 import functools
 import logging
 logger = logging.getLogger("fog_client")
