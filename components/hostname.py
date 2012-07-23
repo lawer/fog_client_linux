@@ -4,6 +4,7 @@ logger = logging.getLogger("fog_client")
 
 FOG_OK = "#!ok"
 
+
 def get_hostname():
     with c.mode_local():
         host = c.run("hostname")
@@ -30,6 +31,7 @@ def ensure_hostname(host):
     else:
         logger.info("Hostname was not changed")
         return False, False
+
 
 def handler(text):
     if FOG_OK not in text:
