@@ -5,11 +5,18 @@ import os
 import ConfigParser
 import logging
 import logging.handlers
+import functools
+import baker
+logger = logging.getLogger("fog_client")
 
 FOG_OK = "#!ok"
 
-def plugins(prefix):
-    return False
+
+def get_client_instance(mac, fog_host):
+    client_instance = functools.partial(fog_request,
+                                        fog_host=fog_host,
+                                        mac=mac)
+    return client_instance
 
 
 def logged_in():
@@ -28,17 +35,22 @@ def get_logger(name):
 
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
-    rfh = logging.handlers.RotatingFileHandler("/var/log/" + name + ".log",
-                                               maxBytes=8192,
-                                               backupCount=5,
-                                               mode='w')
-    ch = logging.StreamHandler()
     formatter = logging.Formatter(fmt="%(levelname)s:%(asctime)s:%(message)s",
                                   datefmt='%d/%m/%Y-%I:%M:%S')
-    rfh.setFormatter(formatter)
+    ch = logging.StreamHandler()
     ch.setFormatter(formatter)
-    logger.addHandler(rfh)
     logger.addHandler(ch)
+    filename = "/var/log/" + name + ".log"
+    try:
+        rfh = logging.handlers.RotatingFileHandler(filename,
+                                                   maxBytes=8192,
+                                                   backupCount=5,
+                                                   mode='w')
+        rfh.setFormatter(formatter)
+        logger.addHandler(rfh)
+
+    except IOError:
+        logging.error("Can't open %s, logging only to stdout" % (filename))
     return logger
 
 
@@ -56,34 +68,21 @@ def load_conf(filename, defaults={}):
 
 def shutdown(mode="reboot"):
     with c.mode_local():
-        if mode=="reboot":
+        if mode == "reboot":
             c.run("reboot")
         else:
-            c.run("halt") 
+            c.run("halt")
 
 
 def fog_request(service, fog_host, handler=None, *args, **kwargs):
-    r = requests.get("http://{}/fog/service/{}.php".format(
-                    fog_host, service),
-                    params=kwargs)
-    if handler is not None:
-        return handler(r.text)
-    else:
-        return r
-
-
-def fog_response_dict(r):
-    status = r.text.splitlines()[0]
-    data_dict = {}
-    if status == FOG_OK:
-        data = r.text.splitlines()[1:]
-        data_list = map(lambda x: x.split("="), data)
-        data_lower = map(lambda x: (x[0].lower().replace('snapin',''), x[1]), 
-                                   data_list)
-        data_dict = dict(data_lower)
-        print data_dict
-    data_dict["status"] = status
-    return data_dict
+    try:
+        r = requests.get("http://{}/fog/service/{}.php".format(
+                         fog_host, service),
+                         params=kwargs)
+        return True, r.text
+    except requests.exceptions.ConnectionError:
+        logger.error("Error connecting to fog server at" + fog_host)
+        return False, None
 
 
 def get_macs():

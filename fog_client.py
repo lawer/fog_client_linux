@@ -5,43 +5,73 @@ import functools
 from components import (client_hostname, client_snapin,
                         client_task_reboot, client_green_fog)
 from fog_lib import get_macs, load_conf, get_logger, shutdown, fog_request
+import baker
+
+logger = get_logger("fog_client")
 
 
-def main():
-    logger = get_logger("fog_client")
-
+def call(func, fog_host, *args, **kwargs):
     macs = get_macs()
-    services = [client_hostname, client_snapin,
-                client_task_reboot, client_green_fog]
-
-    conf = load_conf('/etc/fog_client.ini', {"fog_host": "localhost",
-                                             "snapin_dir": "/tmp/",
-                                             "allow_reboot": "false",
-                                             "interval": "5"})
-    fog_host = conf.get("GENERAL", "fog_host")
-    allow_reboot = conf.getboolean("GENERAL", "allow_reboot")
-    interval = conf.getint("GENERAL", "interval")
-
-    logger.info("Service started")
     for mac in macs:
         logger.info("Detected mac: " + mac)
+        status, reboot = func(fog_host, mac, *args)
+        logger.info("Service did changes={status} "
+                    "action needed={reboot}".format(
+                    status=status, reboot=reboot))
+    return status, reboot
 
+
+@baker.command
+def hostname(fog_host="localhost"):
+    """Sets local hostname to the value set in fog server"""
+    status, reboot = call(client_hostname, fog_host)
+
+
+@baker.command
+def green_fog(fog_host="localhost", allow_reboot=False):
+    """Shutdowns or reboots the computer at times set in fog server"""
+    status, reboot = call(client_green_fog, fog_host, allow_reboot)
+
+
+@baker.command
+def task_reboot(fog_host="localhost", allow_reboot=False):
+    """Reboots the computer if there is an imaging task waiting"""
+    status, reboot = call(client_task_reboot, fog_host, allow_reboot)
+
+
+@baker.command
+def snapins(fog_host="localhost", snapin_dir='/tmp', allow_reboot=False):
+    """Downloads and installs the first snapin waiting in the server
+
+       Subsequential runs of the command could be needed.
+    """
+    status, reboot = call(client_snapin, fog_host, snapin_dir, allow_reboot)
+
+
+@baker.command
+def daemon(fog_host="localhost", snapin_dir='/tmp', allow_reboot=False,
+           config_file='/etc/fog_client.ini', interval=5):
+    """Starts the service in daemon mode.
+    By default configuration is loaded from /etc/fog.ini.
+    """
+    try:
+        conf = load_conf(config_file, {"fog_host": "localhost",
+                                       "snapin_dir": "/tmp/",
+                                       "allow_reboot": "false",
+                                       "interval": "5"})
+        fog_host = conf.get("GENERAL", "fog_host")
+        snapin_dir = conf.get("GENERAL", "fog_host")
+        allow_reboot = conf.getboolean("GENERAL", "allow_reboot")
+        interval = conf.getint("GENERAL", "interval")
+    except:
+        logger.error("Configuration couldn't be loaded. Using defaults")
     while True:
+        hostname(fog_host=fog_host)
+        green_fog(fog_host=fog_host, allow_reboot=allow_reboot)
+        task_reboot(fog_host=fog_host, allow_reboot=allow_reboot)
+        snapins(fog_host=fog_host, snapin_dir='/tmp',
+                allow_reboot=allow_reboot)
         time.sleep(interval)
-        for func, mac in it.product(services, macs):
-            client_instance = functools.partial(fog_request,
-                                                fog_host=fog_host,
-                                                mac=mac)
-            status, reboot = func(client_instance, conf)
-            logger.info("Service did changes={status} "
-                        "action needed={reboot}".format(
-                        status=status, reboot=reboot))
-            if allow_reboot and reboot:
-                if reboot == "reboot" or reboot is True:
-                    shutdown(mode="reboot")
-                else:
-                    shutdown(mode="halt")
-
 
 if __name__ == '__main__':
-    main()
+    baker.run()
