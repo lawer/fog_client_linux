@@ -66,12 +66,20 @@ def load_conf(filename, defaults={}):
     return conf
 
 
-def shutdown(mode="reboot"):
-    with c.mode_local():
-        if mode == "reboot":
-            c.run("reboot")
-        else:
-            c.run("halt")
+def shutdown(mode="reboot", allow_reboot=False):
+    if logged_in():
+        logger.info("Logged in, not rebooting")
+        status, reboot = True, False
+    else:
+        logger.info("Not logged in, rebooting")
+        status, reboot = True, True
+        if allow_reboot:
+            with c.mode_local():
+                if mode == "reboot":
+                    c.run("reboot")
+                else:
+                    c.run("halt")
+    return status, reboot
 
 
 def fog_request(service, fog_host, handler=None, *args, **kwargs):
@@ -79,10 +87,10 @@ def fog_request(service, fog_host, handler=None, *args, **kwargs):
         r = requests.get("http://{}/fog/service/{}.php".format(
                          fog_host, service),
                          params=kwargs)
-        return True, r.text
+        return r.text
     except requests.exceptions.ConnectionError:
         logger.error("Error connecting to fog server at" + fog_host)
-        return False, None
+        raise IOError
 
 
 def get_macs():

@@ -22,13 +22,14 @@ def snapin_from_response(text):
     return data_dict
 
 
-def check_snapin(client_instance):
-    success, result = client_instance("snapins.checkin")
-    if success:
+def get_snapin(client_instance):
+    try:
+        result = client_instance("snapins.checkin")
         snapin = snapin_from_response(result)
         if snapin["status"] == FOG_OK:
             return snapin
-    return None
+    except IOError:
+        return None
 
 
 def download_snapin(client_instance, dirname, snapin):
@@ -67,7 +68,7 @@ def install_snapin(client_instance, snapin, snapin_dir):
 def client_snapin(fog_host, mac, snapin_dir, allow_reboot=False):
     client_instance = get_client_instance(fog_host=fog_host,
                                           mac=mac)
-    snapin = check_snapin(client_instance)
+    snapin = get_snapin(client_instance)
     if snapin:
         return_code, action, reboot = install_snapin(instance=client_instance,
                                                      snapin=snapin,

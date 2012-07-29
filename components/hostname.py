@@ -43,13 +43,13 @@ def handler(text):
 
 
 def client_hostname(fog_host, mac, allow_reboot=False):
-    client_instance = get_client_instance(fog_host=fog_host,
-                                          mac=mac)
-    success, text = client_instance(service="hostname")
-    if success:
+    fog_server = get_client_instance(fog_host=fog_host, mac=mac)
+    action, reboot = False, False
+    try:
+        text = fog_server(service="hostname")
         fog_success, hostname = handler(text)
         if fog_success:
-            return ensure_hostname(hostname)
-    else:
+            action, reboot = ensure_hostname(hostname)
+    except IOError:
         logger.error("Error communicating with fog server on " + fog_host)
-    return False, False
+    return action, reboot
