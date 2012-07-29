@@ -76,6 +76,6 @@ def client_snapin(fog_host, mac, snapin_dir, allow_reboot=False):
         logger.info("Installed " + snapin["filename"] +
                     " with returncode " + str(return_code))
     else:
-        logger.info("No snapins to install on mac")
+        logger.info("No snapins to install")
         action, reboot = False, False
     return action, reboot

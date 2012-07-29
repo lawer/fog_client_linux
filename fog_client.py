@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 import time
 import baker
+import scheduler
+import datetime
+import functools
 from components import (client_hostname, client_snapin,
                         client_task_reboot, client_green_fog)
 from fog_lib import get_macs, load_conf, get_logger, shutdown, fog_request
@@ -9,11 +12,11 @@ logger = get_logger("fog_client")
 
 def call(func, fog_host, *args, **kwargs):
     for mac in get_macs():
-        logger.info("Detected mac: " + mac)
+#        logger.info("Detected mac: " + mac)
         status, reboot = func(fog_host, mac, *args)
-        logger.info("Service did changes={status} "
-                    "action needed={reboot}".format(
-                    status=status, reboot=reboot))
+        # logger.info("Service did changes={status} "
+        #             "action needed={reboot}".format(
+        #             status=status, reboot=reboot))
     return status, reboot
 
 
@@ -61,14 +64,29 @@ def daemon(fog_host="localhost", snapin_dir='/tmp', allow_reboot=False,
         interval = conf.getint("GENERAL", "interval")
     except:
         logger.error("Configuration couldn't be loaded. Using defaults")
-    baker.writeconfig()
-    while True:
-        hostname(fog_host=fog_host)
-        green_fog(fog_host=fog_host, allow_reboot=allow_reboot)
-        task_reboot(fog_host=fog_host, allow_reboot=allow_reboot)
-        snapins(fog_host=fog_host, snapin_dir='/tmp',
-                allow_reboot=allow_reboot)
-        time.sleep(interval)
+
+    s = scheduler.Scheduler()
+    s.schedule(name="hostname",
+               start_time=datetime.datetime.now(),
+               calc_next_time=scheduler.every_x_secs(interval),
+               func=functools.partial(hostname, fog_host=fog_host))
+    s.schedule(name="green_fog",
+               start_time=datetime.datetime.now(),
+               calc_next_time=scheduler.every_x_secs(interval),
+               func=functools.partial(green_fog, fog_host=fog_host,
+                                      allow_reboot=allow_reboot))
+    s.schedule(name="task_reboot",
+               start_time=datetime.datetime.now(),
+               calc_next_time=scheduler.every_x_secs(interval),
+               func=functools.partial(task_reboot, fog_host=fog_host,
+                                      allow_reboot=allow_reboot))
+    s.schedule(name="snapins",
+               start_time=datetime.datetime.now(),
+               calc_next_time=scheduler.every_x_secs(interval),
+               func=functools.partial(snapins, fog_host=fog_host,
+                                      snapin_dir=snapin_dir,
+                                      allow_reboot=allow_reboot))
+    s.run()
 
 if __name__ == '__main__':
     baker.run()

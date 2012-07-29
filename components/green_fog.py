@@ -50,11 +50,11 @@ def client_green_fog(fog_host, mac, allow_reboot):
         if task_pending:
             task, task_type, hour = process_task_data(task_data)
             if task:
-                logger.info("Green task pending,")
+                logger.info("Green Fog task pending,")
                 status, reboot = shutdown(mode=task_type,
                                           allow_reboot=allow_reboot)
             else:
-                logger.info("Task due at " + hour)
+                logger.info("Green Fog Task due at " + hour)
                 status, reboot = True, False
         else:
             logger.info("No green fog task pending.")

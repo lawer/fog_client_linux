@@ -40,15 +40,14 @@ def get_logger(name):
     ch = logging.StreamHandler()
     ch.setFormatter(formatter)
     logger.addHandler(ch)
-    filename = "/var/log/" + name + ".log"
     try:
+        filename = "/var/log/" + name + ".log"
         rfh = logging.handlers.RotatingFileHandler(filename,
                                                    maxBytes=8192,
                                                    backupCount=5,
                                                    mode='w')
         rfh.setFormatter(formatter)
         logger.addHandler(rfh)
-
     except IOError:
         logging.error("Can't open %s, logging only to stdout" % (filename))
     return logger
