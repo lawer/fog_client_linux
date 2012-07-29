@@ -46,8 +46,8 @@ def client_green_fog(fog_host, mac, allow_reboot):
                                           mac=mac)
     try:
         fog_data = client_instance(service="greenfog")
-        fog_success, task_data = handler(fog_data)
-        if fog_success:
+        task_pending, task_data = handler(fog_data)
+        if task_pending:
             task, task_type, hour = process_task_data(task_data)
             if task:
                 logger.info("Green task pending,")

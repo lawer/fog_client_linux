@@ -98,7 +98,7 @@ def get_macs():
     mac_re_comp = re.compile(mac_re)
     with c.mode_local():
         ifconfig = c.run("ifconfig")
-        macs = [mac_re_comp.search(line).group()
+        macs = (mac_re_comp.search(line).group()
                 for line in ifconfig.splitlines()
-                if 'HW' in line and 'eth' in line]
+                if 'HW' in line and 'eth' in line)
         return macs

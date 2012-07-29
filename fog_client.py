@@ -1,18 +1,14 @@
 #!/usr/bin/env python
 import time
-import itertools as it
-import functools
+import baker
 from components import (client_hostname, client_snapin,
                         client_task_reboot, client_green_fog)
 from fog_lib import get_macs, load_conf, get_logger, shutdown, fog_request
-import baker
-
 logger = get_logger("fog_client")
 
 
 def call(func, fog_host, *args, **kwargs):
-    macs = get_macs()
-    for mac in macs:
+    for mac in get_macs():
         logger.info("Detected mac: " + mac)
         status, reboot = func(fog_host, mac, *args)
         logger.info("Service did changes={status} "
@@ -65,6 +61,7 @@ def daemon(fog_host="localhost", snapin_dir='/tmp', allow_reboot=False,
         interval = conf.getint("GENERAL", "interval")
     except:
         logger.error("Configuration couldn't be loaded. Using defaults")
+    baker.writeconfig()
     while True:
         hostname(fog_host=fog_host)
         green_fog(fog_host=fog_host, allow_reboot=allow_reboot)
