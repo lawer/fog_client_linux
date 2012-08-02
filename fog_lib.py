@@ -9,7 +9,36 @@ import functools
 import baker
 logger = logging.getLogger("fog_client")
 
-FOG_OK = "#!ok"
+
+class FogRequester(object):
+    """Encapsulates the logic for communicating with the fog server
+
+    Returns the text response from the fog server.
+    """
+
+    FOG_OK = "#!ok"
+
+    def __init__(self, mac, fog_host):
+        super(FogRequester, self).__init__()
+        self.mac = mac
+        self.fog_host = fog_host
+
+    def _fog_request(self, service, result="text", *args, **kwargs):
+        try:
+            params = {"mac": self.mac}
+            params.update(kwargs)
+            if result == "text":
+                r = requests.get("http://{}/fog/service/{}.php".format(
+                                 self.fog_host, service),
+                                 params=params)
+                return r.text
+            else:
+                return r.content
+        except requests.exceptions.ConnectionError:
+            raise IOError("Error communicating with fog server on " + fog_host)
+
+    def get_data(self, service):
+        return self._fog_request(service)
 
 
 def get_client_instance(mac, fog_host):
@@ -17,6 +46,17 @@ def get_client_instance(mac, fog_host):
                                         fog_host=fog_host,
                                         mac=mac)
     return client_instance
+
+
+def fog_request(service, fog_host, handler=None, *args, **kwargs):
+    try:
+        r = requests.get("http://{}/fog/service/{}.php".format(
+                         fog_host, service),
+                         params=kwargs)
+        return r.text
+    except requests.exceptions.ConnectionError:
+        logger.error("Error connecting to fog server at" + fog_host)
+        raise IOError
 
 
 def logged_in():
@@ -79,17 +119,6 @@ def shutdown(mode="reboot", allow_reboot=False):
                 else:
                     c.run("halt")
     return status, reboot
-
-
-def fog_request(service, fog_host, handler=None, *args, **kwargs):
-    try:
-        r = requests.get("http://{}/fog/service/{}.php".format(
-                         fog_host, service),
-                         params=kwargs)
-        return r.text
-    except requests.exceptions.ConnectionError:
-        logger.error("Error connecting to fog server at" + fog_host)
-        raise IOError
 
 
 def get_macs():

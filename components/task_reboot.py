@@ -1,17 +1,27 @@
-from fog_lib import logged_in, get_client_instance
+from fog_lib import FogRequester, shutdown
 import logging
 logger = logging.getLogger("fog_client")
 
-FOG_OK = "#!ok"
+
+class TaskRebootRequester(FogRequester):
+    """docstring for HostnameRequester"""
+    def _handler(self, text):
+        data = text.splitlines()[0]
+        if self.FOG_OK in data:
+            return True
+        else:
+            return False
+
+    def get_data(self):
+        text = super(TaskRebootRequester, self).get_data(service="jobs")
+        return self._handler(text)
 
 
 def client_task_reboot(fog_host, mac, allow_reboot):
-    client_instance = get_client_instance(fog_host=fog_host,
-                                          mac=mac)
+    fog_server = TaskRebootRequester(fog_host=fog_host,
+                                     mac=mac)
     try:
-        text = client_instance("jobs")
-        data = text.splitlines()[0]
-        if data == FOG_OK:
+        if fog_server.get_data():
             shutdown(mode=reboot, allow_reboot=allow_reboot)
         else:
             logger.info("No Image tasks pending.")

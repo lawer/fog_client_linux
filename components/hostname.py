@@ -1,9 +1,22 @@
 import cuisine as c
-from fog_lib import get_client_instance
+from fog_lib import FogRequester
 import logging
 logger = logging.getLogger("fog_client")
 
-FOG_OK = "#!ok"
+
+class HostnameRequester(FogRequester):
+    """docstring for HostnameRequester"""
+    def _handler(self, text):
+        if self.FOG_OK in text:
+            lines = text.splitlines()
+            status, hostname = lines[0].split('=')
+            return hostname
+        else:
+            raise ValueError("Hostname is not registered in fog Server")
+
+    def get_data(self):
+        text = super(HostnameRequester, self).get_data(service="hostname")
+        return self._handler(text)
 
 
 def get_hostname():
@@ -33,23 +46,15 @@ def ensure_hostname(host):
         return False, False
 
 
-def handler(text):
-    if FOG_OK in text:
-        lines = text.splitlines()
-        status, hostname = lines[0].split('=')
-        return True, hostname
-    else:
-        return False, None
-
-
 def client_hostname(fog_host, mac, allow_reboot=False):
-    fog_server = get_client_instance(fog_host=fog_host, mac=mac)
+    fog_server = HostnameRequester(fog_host=fog_host, mac=mac)
     action, reboot = False, False
     try:
-        text = fog_server(service="hostname")
-        fog_success, hostname = handler(text)
-        if fog_success:
-            action, reboot = ensure_hostname(hostname)
-    except IOError:
-        logger.error("Error communicating with fog server on " + fog_host)
-    return action, reboot
+        hostname = fog_server.get_data()
+        action, reboot = ensure_hostname(hostname)
+    except IOError as e:
+        logger.error(e)
+    except ValueError as e:
+        logger.error(e)
+    finally:
+        return action, reboot
