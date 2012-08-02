@@ -7,6 +7,8 @@ import logging
 import logging.handlers
 import functools
 import baker
+import scheduler
+import datetime
 logger = logging.getLogger("fog_client")
 
 
@@ -23,40 +25,36 @@ class FogRequester(object):
         self.mac = mac
         self.fog_host = fog_host
 
-    def _fog_request(self, service, result="text", *args, **kwargs):
+    def get_data(self, service, binary=False, *args, **kwargs):
         try:
             params = {"mac": self.mac}
             params.update(kwargs)
-            if result == "text":
-                r = requests.get("http://{}/fog/service/{}.php".format(
-                                 self.fog_host, service),
-                                 params=params)
-                return r.text
-            else:
+
+            r = requests.get("http://{}/fog/service/{}.php".format(
+                             self.fog_host, service),
+                             params=params)
+            if binary:
                 return r.content
+            return r.text
         except requests.exceptions.ConnectionError:
             raise IOError("Error communicating with fog server on " + fog_host)
 
-    def get_data(self, service):
-        return self._fog_request(service)
 
+class MyScheduler(object):
+    """docstring for MyScheduler"""
+    def __init__(self):
+        super(MyScheduler, self).__init__()
+        self.scheduler = scheduler.Scheduler()
 
-def get_client_instance(mac, fog_host):
-    client_instance = functools.partial(fog_request,
-                                        fog_host=fog_host,
-                                        mac=mac)
-    return client_instance
+    def schedule(self, func, params, interval):
+        self.scheduler.schedule(name=func.func_name,
+                                start_time=datetime.datetime.now(),
+                                calc_next_time=scheduler.every_x_secs(
+                                    interval),
+                                func=functools.partial(func, **params))
 
-
-def fog_request(service, fog_host, handler=None, *args, **kwargs):
-    try:
-        r = requests.get("http://{}/fog/service/{}.php".format(
-                         fog_host, service),
-                         params=kwargs)
-        return r.text
-    except requests.exceptions.ConnectionError:
-        logger.error("Error connecting to fog server at" + fog_host)
-        raise IOError
+    def run(self):
+        self.scheduler.run()
 
 
 def logged_in():
@@ -114,10 +112,11 @@ def shutdown(mode="reboot", allow_reboot=False):
         status, reboot = True, True
         if allow_reboot:
             with c.mode_local():
-                if mode == "reboot":
-                    c.run("reboot")
-                else:
-                    c.run("halt")
+                with c.mode_sudo():
+                    if mode == "reboot":
+                        c.run("reboot")
+                    else:
+                        c.run("halt")
     return status, reboot
 
 

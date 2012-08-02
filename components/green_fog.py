@@ -13,11 +13,10 @@ class GreenFogRequester(FogRequester):
         else:
             raise ValueError("No jobs pending")
 
-    def get_data(self):
-        text = super(GreenFogRequester, self).get_data(service="greenfog")
+    def get_green_fog_data(self):
+        text = self.get_data(service="greenfog")
         hour, minute, task_type = self._handler(text).split('@')
-        task = GreenFogTask(hour, minute, task_type)
-        return task
+        return hour, minute, task_type
 
 
 class GreenFogTask(object):
@@ -50,18 +49,19 @@ class GreenFogTask(object):
 def client_green_fog(fog_host, mac, allow_reboot):
     fog_server = GreenFogRequester(fog_host=fog_host,
                                    mac=mac)
+    status, reboot = False, False
     try:
-        task = fog_server.get_data()
+        hour, minute, task_type = fog_server.get_green_fog_data()
+        task = GreenFogTask(hour, minute, task_type)
         if task.due_now:
             logger.info("Green Fog task pending,")
             status, reboot = shutdown(mode=task.task_type,
                                       allow_reboot=allow_reboot)
         else:
             logger.info("Green Fog Task due at " + task.hour)
-            status, reboot = True, False
-    except IOError:
-        logger.info("Error communicating with fog server on " + fog_host)
-        status, reboot = False, False
+            status, reboot = False, False
+    except IOError as e:
+        logger.info(e)
     except ValueError as e:
         logger.info(e)
     return status, reboot

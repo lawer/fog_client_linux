@@ -14,8 +14,8 @@ class HostnameRequester(FogRequester):
         else:
             raise ValueError("Hostname is not registered in fog Server")
 
-    def get_data(self):
-        text = super(HostnameRequester, self).get_data(service="hostname")
+    def get_hostname_data(self):
+        text = self.get_data(service="hostname")
         return self._handler(text)
 
 
@@ -39,7 +39,8 @@ def set_hostname(host):
 def ensure_hostname(host):
     old = get_hostname()
     if old != host:
-        set_hostname(host)
+        with c.mode_sudo():
+            set_hostname(host)
         return True, True
     else:
         logger.info("Hostname was not changed")
@@ -50,7 +51,7 @@ def client_hostname(fog_host, mac, allow_reboot=False):
     fog_server = HostnameRequester(fog_host=fog_host, mac=mac)
     action, reboot = False, False
     try:
-        hostname = fog_server.get_data()
+        hostname = fog_server.get_hostname_data()
         action, reboot = ensure_hostname(hostname)
     except IOError as e:
         logger.error(e)

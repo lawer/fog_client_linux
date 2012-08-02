@@ -9,24 +9,25 @@ class TaskRebootRequester(FogRequester):
         data = text.splitlines()[0]
         if self.FOG_OK in data:
             return True
-        else:
-            return False
+        raise ValueError("No Image tasks pending.")
 
-    def get_data(self):
-        text = super(TaskRebootRequester, self).get_data(service="jobs")
+    def get_task_reboot_data(self):
+        text = self.get_data(service="jobs")
         return self._handler(text)
 
 
 def client_task_reboot(fog_host, mac, allow_reboot):
     fog_server = TaskRebootRequester(fog_host=fog_host,
                                      mac=mac)
+    status, reboot = False, False
     try:
-        if fog_server.get_data():
-            shutdown(mode=reboot, allow_reboot=allow_reboot)
-        else:
-            logger.info("No Image tasks pending.")
-            status, reboot = False, False
-    except IOError:
-        logger.info("Error communicating with fog server on " + fog_host)
-        status, reboot = False, False
+        task = fog_server.get_task_reboot_data()
+        if task:
+            status, reboot = shutdown(mode=reboot,
+                                      allow_reboot=allow_reboot)
+
+    except IOError as e:
+        logger.info(e)
+    except ValueError as e:
+        logger.info(e)
     return status, reboot

@@ -6,7 +6,7 @@ import datetime
 import functools
 from components import (client_hostname, client_snapin,
                         client_task_reboot, client_green_fog)
-from fog_lib import get_macs, load_conf, get_logger, shutdown, fog_request
+from fog_lib import get_macs, load_conf, get_logger, MyScheduler
 logger = get_logger("fog_client")
 
 
@@ -65,28 +65,16 @@ def daemon(fog_host="localhost", snapin_dir='/tmp', allow_reboot=False,
     except:
         logger.error("Configuration couldn't be loaded. Using defaults")
 
-    s = scheduler.Scheduler()
-    s.schedule(name="hostname",
-               start_time=datetime.datetime.now(),
-               calc_next_time=scheduler.every_x_secs(interval),
-               func=functools.partial(hostname, fog_host=fog_host))
-    s.schedule(name="green_fog",
-               start_time=datetime.datetime.now(),
-               calc_next_time=scheduler.every_x_secs(interval),
-               func=functools.partial(green_fog, fog_host=fog_host,
-                                      allow_reboot=allow_reboot))
-    s.schedule(name="task_reboot",
-               start_time=datetime.datetime.now(),
-               calc_next_time=scheduler.every_x_secs(interval),
-               func=functools.partial(task_reboot, fog_host=fog_host,
-                                      allow_reboot=allow_reboot))
-    s.schedule(name="snapins",
-               start_time=datetime.datetime.now(),
-               calc_next_time=scheduler.every_x_secs(interval),
-               func=functools.partial(snapins, fog_host=fog_host,
-                                      snapin_dir=snapin_dir,
-                                      allow_reboot=allow_reboot))
-    s.run()
+    s = MyScheduler()
+    s.schedule(hostname, {"fog_host": fog_host}, interval)
+    s.schedule(green_fog, {"fog_host": fog_host,
+                           "allow_reboot": allow_reboot}, interval)
+    s.schedule(task_reboot, {"fog_host": fog_host,
+                             "allow_reboot": allow_reboot}, interval)
+    s.schedule(snapins, {"fog_host": fog_host,
+                         "allow_reboot": allow_reboot,
+                         "snapin_dir": snapin_dir}, interval)
 
+    s.run()
 if __name__ == '__main__':
     baker.run()
