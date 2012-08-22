@@ -7,8 +7,9 @@ import logging
 import logging.handlers
 import functools
 import baker
-import scheduler
+import sched
 import datetime
+import time
 logger = logging.getLogger("fog_client")
 
 
@@ -30,34 +31,38 @@ class FogRequester(object):
             params = {"mac": self.mac}
             params.update(kwargs)
 
-            r = requests.get("http://{}/fog/service/{}.php".format(
-                             self.fog_host, service),
-                             params=params)
+            response = requests.get("http://{}/fog/service/{}.php".format(
+                                    self.fog_host, service),
+                                    params=params)
             if binary:
-                return r.content
-            return r.text
+                return response.content
+            return response.text
         except requests.exceptions.ConnectionError:
-            raise IOError("Error communicating with fog server on " + fog_host)
+            raise IOError("Error communicating with fog server on "
+                          + self.fog_host)
 
 
-class MyScheduler(object):
-    """docstring for MyScheduler"""
+class Scheduler(object):
+    """Schedules functions por future execution"""
     def __init__(self):
-        super(MyScheduler, self).__init__()
-        self.scheduler = scheduler.Scheduler()
+        super(Scheduler, self).__init__()
+        self.scheduler = sched.scheduler(time.time, time.sleep)
 
-    def schedule(self, func, params, interval):
-        self.scheduler.schedule(name=func.func_name,
-                                start_time=datetime.datetime.now(),
-                                calc_next_time=scheduler.every_x_secs(
-                                    interval),
-                                func=functools.partial(func, **params))
+    def schedule(self, func, interval, params):
+        def func_scheduled(self, func, params, interval):
+            func(**params)
+            self.schedule(func, interval, params)
+        self.scheduler.enter(interval, 1, func_scheduled,
+                            (self, func, params, interval))
 
     def run(self):
         self.scheduler.run()
 
 
 def logged_in():
+    """Returns True is an user is logged in.
+    At the moment only works on Ubuntu 12.04
+    """
     try:
         if ':0' in os.listdir('/var/run/lightdm/root'):
             return True
@@ -68,6 +73,7 @@ def logged_in():
 
 
 def get_logger(name):
+    """Returns a logging object, already configured"""
     requests_log = logging.getLogger("requests")
     requests_log.setLevel(logging.WARNING)
 
@@ -92,6 +98,9 @@ def get_logger(name):
 
 
 def load_conf(filename, defaults={}):
+    """Loads a ConfigParser config file.
+    If the file doesn't exists its created anew with default values
+    """
     conf = ConfigParser.SafeConfigParser(defaults)
 
     obert = conf.read(filename)
@@ -104,6 +113,7 @@ def load_conf(filename, defaults={}):
 
 
 def shutdown(mode="reboot", allow_reboot=False):
+    """Shutdowns or reboots the computer if allow reboot == True."""
     if logged_in():
         logger.info("Logged in, not rebooting")
         status, reboot = True, False
@@ -121,6 +131,7 @@ def shutdown(mode="reboot", allow_reboot=False):
 
 
 def get_macs():
+    """Returns all MAC adresses of the NIC cards installed on the computer"""
     mac_re = "([a-fA-F0-9]{2}[:|\-]?){6}"
     mac_re_comp = re.compile(mac_re)
     with c.mode_local():

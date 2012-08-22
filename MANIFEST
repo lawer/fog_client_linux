@@ -5,5 +5,7 @@ setup.py
 aux/fog_client.conf
 aux/fog_client.ini
 components/__init__.py
+components/green_fog.py
 components/hostname.py
 components/snapins.py
+components/task_reboot.py

@@ -22,7 +22,7 @@ class HostnameRequester(FogRequester):
 def get_hostname():
     with c.mode_local():
         host = c.run("hostname")
-        return host
+        return host.strip()
 
 
 def set_hostname(host):
@@ -56,6 +56,8 @@ def client_hostname(fog_host, mac, allow_reboot=False):
     except IOError as e:
         logger.error(e)
     except ValueError as e:
+        logger.error(e)
+    except Exception as e:
         logger.error(e)
     finally:
         return action, reboot
