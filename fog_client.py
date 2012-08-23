@@ -1,5 +1,8 @@
 #!/usr/bin/env python
+"""Client for fog service made in python
+Currently only tested in ubuntu 12.04+"""
 import cliapp
+import logging
 from components import (client_hostname, client_snapin,
                         client_task_reboot, client_green_fog)
 from fog_lib import get_macs, Scheduler
@@ -27,7 +30,15 @@ class FogClientApp(cliapp.Application):
     def setup_logging(self):
         "Set up logging"
         cliapp.Application.setup_logging(self)
+
         logger = logging.getLogger()
+        handler = logging.StreamHandler()
+        fmt = '%(asctime)s %(levelname)s %(message)s'
+        datefmt = '%Y-%m-%d %H:%M:%S'
+        formatter = logging.Formatter(fmt, datefmt)
+        handler.setFormatter(formatter)
+
+        logger.addHandler(handler)
 
     def cmd_hostname(self, args):
         """Sets local hostname to the value saved in fog server"""
@@ -63,7 +74,7 @@ class FogClientApp(cliapp.Application):
         By default configuration is loaded from /etc/fog_client.ini.
         """
         interval = self.settings["interval"]
-        arguments = [[]]
+        arguments = [args]
 
         scheduler = Scheduler()
         scheduler.schedule(self.cmd_hostname, interval, arguments)
@@ -73,6 +84,9 @@ class FogClientApp(cliapp.Application):
         scheduler.run()
 
 if __name__ == '__main__':
-    app = FogClientApp(version="0.3")
+    app = FogClientApp(version="0.3", description="""
+Client for fog service made in python
+
+Currently only tested in ubuntu 12.04+""")
     app.settings.config_files = ["/etc/fog_client.ini"]
     app.run()
