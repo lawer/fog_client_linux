@@ -2,7 +2,7 @@
 import cliapp
 from components import (client_hostname, client_snapin,
                         client_task_reboot, client_green_fog)
-from fog_lib import get_macs, load_conf, Scheduler
+from fog_lib import get_macs, Scheduler
 
 
 class FogClientApp(cliapp.Application):
@@ -23,6 +23,11 @@ class FogClientApp(cliapp.Application):
                               'Sets interval between service execution '
                               '(default: 5).',
                               default=5)
+
+    def setup_logging(self):
+        "Set up logging"
+        cliapp.Application.setup_logging(self)
+        logger = logging.getLogger()
 
     def cmd_hostname(self, args):
         """Sets local hostname to the value saved in fog server"""
@@ -55,7 +60,7 @@ class FogClientApp(cliapp.Application):
 
     def cmd_daemon(self, args):
         """Starts the service in daemon mode.
-        By default configuration is loaded from /etc/fog.ini.
+        By default configuration is loaded from /etc/fog_client.ini.
         """
         interval = self.settings["interval"]
         arguments = [[]]
@@ -68,5 +73,6 @@ class FogClientApp(cliapp.Application):
         scheduler.run()
 
 if __name__ == '__main__':
-    app = FogClientApp()
+    app = FogClientApp(version="0.3")
+    app.settings.config_files = ["/etc/fog_client.ini"]
     app.run()

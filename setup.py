@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(name='fog_client',
-      version='0.2',
+      version='0.3',
       author='Carles Gonzalez',
       packages=['components'],
       py_modules=['fog_lib', 'fog_client', 'scheduler'],

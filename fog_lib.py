@@ -70,19 +70,19 @@ def logged_in():
         return True
 
 
-def load_conf(filename, defaults={}):
-    """Loads a ConfigParser config file.
-    If the file doesn't exists its created anew with default values
-    """
-    conf = ConfigParser.SafeConfigParser(defaults)
+# def load_conf(filename, defaults={}):
+#     """Loads a ConfigParser config file.
+#     If the file doesn't exists its created anew with default values
+#     """
+#     conf = ConfigParser.SafeConfigParser(defaults)
 
-    obert = conf.read(filename)
+#     obert = conf.read(filename)
 
-    if not obert:
-        with open(filename, 'w') as conf_file:
-            conf.add_section('GENERAL')
-            conf.write(conf_file)
-    return conf
+#     if not obert:
+#         with open(filename, 'w') as conf_file:
+#             conf.add_section('GENERAL')
+#             conf.write(conf_file)
+#     return conf
 
 
 def shutdown(mode="reboot", allow_reboot=False):
