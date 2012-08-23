@@ -1,7 +1,6 @@
 import cuisine as c
 from fog_lib import FogRequester
 import logging
-logger = logging.getLogger("fog_client")
 
 
 class HostnameRequester(FogRequester):
@@ -33,7 +32,7 @@ def set_hostname(host):
         hosts_old = c.file_read("/etc/hosts")
         hosts_new = hosts_old.replace(old, host)
         c.file_write("/etc/hosts", hosts_new)
-        logger.info("Hostname changed from %s to %s" % (old, host))
+        logging.info("Hostname changed from %s to %s" % (old, host))
 
 
 def ensure_hostname(host):
@@ -43,7 +42,7 @@ def ensure_hostname(host):
             set_hostname(host)
         return True, True
     else:
-        logger.info("Hostname was not changed")
+        logging.info("Hostname was not changed")
         return False, False
 
 
@@ -54,10 +53,10 @@ def client_hostname(fog_host, mac, allow_reboot=False):
         hostname = fog_server.get_hostname_data()
         action, reboot = ensure_hostname(hostname)
     except IOError as e:
-        logger.error(e)
+        logging.error(e)
     except ValueError as e:
-        logger.error(e)
+        logging.error(e)
     except Exception as e:
-        logger.error(e)
+        logging.error(e)
     finally:
         return action, reboot

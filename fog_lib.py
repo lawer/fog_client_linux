@@ -4,13 +4,11 @@ import re
 import os
 import ConfigParser
 import logging
-import logging.handlers
 import functools
 import baker
 import sched
 import datetime
 import time
-logger = logging.getLogger("fog_client")
 
 
 class FogRequester(object):
@@ -48,12 +46,12 @@ class Scheduler(object):
         super(Scheduler, self).__init__()
         self.scheduler = sched.scheduler(time.time, time.sleep)
 
-    def schedule(self, func, interval, params):
-        def func_scheduled(self, func, params, interval):
-            func(**params)
-            self.schedule(func, interval, params)
+    def schedule(self, func, interval, args=[], kwargs={}):
+        def func_scheduled(self, func, args, kwargs, interval):
+            func(*args, **kwargs)
+            self.schedule(func, interval, args, kwargs)
         self.scheduler.enter(interval, 1, func_scheduled,
-                            (self, func, params, interval))
+                            (self, func, args, kwargs, interval))
 
     def run(self):
         self.scheduler.run()
@@ -70,31 +68,6 @@ def logged_in():
             return False
     except OSError:
         return True
-
-
-def get_logger(name):
-    """Returns a logging object, already configured"""
-    requests_log = logging.getLogger("requests")
-    requests_log.setLevel(logging.WARNING)
-
-    logger = logging.getLogger(name)
-    logger.setLevel(logging.INFO)
-    formatter = logging.Formatter(fmt="%(levelname)s:%(asctime)s:%(message)s",
-                                  datefmt='%d/%m/%Y-%I:%M:%S')
-    ch = logging.StreamHandler()
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
-    try:
-        filename = "/var/log/" + name + ".log"
-        rfh = logging.handlers.RotatingFileHandler(filename,
-                                                   maxBytes=8192,
-                                                   backupCount=5,
-                                                   mode='w')
-        rfh.setFormatter(formatter)
-        logger.addHandler(rfh)
-    except IOError:
-        logging.error("Can't open %s, logging only to stdout" % (filename))
-    return logger
 
 
 def load_conf(filename, defaults={}):
@@ -115,10 +88,10 @@ def load_conf(filename, defaults={}):
 def shutdown(mode="reboot", allow_reboot=False):
     """Shutdowns or reboots the computer if allow reboot == True."""
     if logged_in():
-        logger.info("Logged in, not rebooting")
+        logging.info("Logged in, not rebooting")
         status, reboot = True, False
     else:
-        logger.info("Not logged in, rebooting")
+        logging.info("Not logged in, rebooting")
         status, reboot = True, True
         if allow_reboot:
             with c.mode_local():

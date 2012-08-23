@@ -1,9 +1,8 @@
 import cuisine as c
 import subprocess
 from fog_lib import FogRequester
-import functools
 import logging
-logger = logging.getLogger("fog_client")
+import functools
 
 
 class SnapinRequester(FogRequester):
@@ -96,11 +95,11 @@ def client_snapin(fog_host, mac, snapin_dir, allow_reboot=False):
         snapin_dict = fog_requester.get_snapin_data()
         snapin = Snapin(snapin_dict, snapin_dir, fog_requester)
         snapin.install()
-        logger.info("Installed " + snapin.complete_filename +
-                    " with returncode " + str(snapin.return_code))
+        logging.info("Installed " + snapin.complete_filename +
+                     " with returncode " + str(snapin.return_code))
         action, reboot = True, snapin.reboot
     except IOError as e:
-        logger.info(e)
+        logging.info(e)
     except ValueError as e:
-        logger.info(e)
+        logging.info(e)
     return action, reboot

@@ -1,8 +1,7 @@
 from fog_lib import FogRequester, shutdown
+import logging
 import datetime
 import base64
-import logging
-logger = logging.getLogger("fog_client")
 
 
 class GreenFogRequester(FogRequester):
@@ -54,14 +53,14 @@ def client_green_fog(fog_host, mac, allow_reboot):
         hour, minute, task_type = fog_server.get_green_fog_data()
         task = GreenFogTask(hour, minute, task_type)
         if task.due_now:
-            logger.info("Green Fog task pending,")
+            logging.info("Green Fog task pending,")
             status, reboot = shutdown(mode=task.task_type,
                                       allow_reboot=allow_reboot)
         else:
-            logger.info("Green Fog Task due at " + task.hour)
+            logging.info("Green Fog Task due at " + task.hour)
             status, reboot = False, False
     except IOError as e:
-        logger.info(e)
+        logging.info(e)
     except ValueError as e:
-        logger.info(e)
+        logging.info(e)
     return status, reboot

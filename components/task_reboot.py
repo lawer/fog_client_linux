@@ -1,6 +1,5 @@
 from fog_lib import FogRequester, shutdown
 import logging
-logger = logging.getLogger("fog_client")
 
 
 class TaskRebootRequester(FogRequester):
@@ -27,7 +26,7 @@ def client_task_reboot(fog_host, mac, allow_reboot):
                                       allow_reboot=allow_reboot)
 
     except IOError as e:
-        logger.info(e)
+        logging.info(e)
     except ValueError as e:
-        logger.info(e)
+        logging.info(e)
     return status, reboot
