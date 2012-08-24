@@ -1,13 +1,10 @@
+"""Utility code for fog_client"""
 import cuisine as c
 import requests
 import re
 import os
-import ConfigParser
 import logging
-import functools
-import baker
 import sched
-import datetime
 import time
 
 
@@ -24,7 +21,7 @@ class FogRequester(object):
         self.mac = mac
         self.fog_host = fog_host
 
-    def get_data(self, service, binary=False, *args, **kwargs):
+    def get_data(self, service, binary=False, **kwargs):
         try:
             params = {"mac": self.mac}
             params.update(kwargs)
@@ -41,12 +38,15 @@ class FogRequester(object):
 
 
 class Scheduler(object):
-    """Schedules functions por future execution"""
+    """Schedules functions per future execution"""
     def __init__(self):
         super(Scheduler, self).__init__()
         self.scheduler = sched.scheduler(time.time, time.sleep)
 
-    def schedule(self, func, interval, args=[], kwargs={}):
+    def schedule(self, func, interval, args=None, kwargs=None):
+        args = args or []
+        kwargs = kwargs or {}
+
         def func_scheduled(self, func, args, kwargs, interval):
             func(*args, **kwargs)
             self.schedule(func, interval, args, kwargs)
@@ -68,21 +68,6 @@ def logged_in():
             return False
     except OSError:
         return True
-
-
-# def load_conf(filename, defaults={}):
-#     """Loads a ConfigParser config file.
-#     If the file doesn't exists its created anew with default values
-#     """
-#     conf = ConfigParser.SafeConfigParser(defaults)
-
-#     obert = conf.read(filename)
-
-#     if not obert:
-#         with open(filename, 'w') as conf_file:
-#             conf.add_section('GENERAL')
-#             conf.write(conf_file)
-#     return conf
 
 
 def shutdown(mode="reboot", allow_reboot=False):

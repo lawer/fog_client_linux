@@ -9,6 +9,7 @@ from fog_lib import get_macs, Scheduler
 
 
 class FogClientApp(cliapp.Application):
+    """Class used por cliapp customizations"""
     def add_settings(self):
         self.settings.string(['fog_host'],
                              'Hostname or ip of the fog server (default: '
@@ -84,9 +85,9 @@ class FogClientApp(cliapp.Application):
         scheduler.run()
 
 if __name__ == '__main__':
-    app = FogClientApp(version="0.3", description="""
+    client_app = FogClientApp(version="0.3", description="""
 Client for fog service made in python
 
 Currently only tested in ubuntu 12.04+""")
-    app.settings.config_files = ["/etc/fog_client.ini"]
-    app.run()
+    client_app.settings.config_files = ["/etc/fog_client.ini"]
+    client_app.run()
