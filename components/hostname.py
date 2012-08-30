@@ -68,3 +68,4 @@ def client_hostname(fog_host, mac):
     # except Exception as ex:
     #     logging.error(ex)
     return action, reboot
+ 
