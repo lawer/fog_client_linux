@@ -3,8 +3,7 @@
 Currently only tested in ubuntu 12.04+"""
 import cliapp
 import logging
-from components import (client_hostname, client_snapin,
-                        client_task_reboot, client_green_fog)
+import components
 from fog_lib import get_macs, Scheduler
 
 
@@ -44,20 +43,20 @@ class FogClientApp(cliapp.Application):
     def cmd_hostname(self, args):
         """Sets local hostname to the value saved in fog server"""
         fog_host = self.settings["fog_host"]
-        return [client_hostname(fog_host, mac) for mac in get_macs()]
+        return [components.hostname(fog_host, mac) for mac in get_macs()]
 
     def cmd_green_fog(self, args):
         """Shutdowns or reboots the computer at times set in fog server"""
         fog_host = self.settings["fog_host"]
         allow_reboot = self.settings["allow_reboot"]
-        return [client_green_fog(fog_host, mac, allow_reboot)
+        return [components.green_fog(fog_host, mac, allow_reboot)
                 for mac in get_macs()]
 
     def cmd_task_reboot(self, args):
         """Reboots the computer if there is an imaging task waiting"""
         fog_host = self.settings["fog_host"]
         allow_reboot = self.settings["allow_reboot"]
-        return [client_task_reboot(fog_host, mac, allow_reboot)
+        return [components.task_reboot(fog_host, mac, allow_reboot)
                 for mac in get_macs()]
 
     def cmd_snapins(self, args):
@@ -67,7 +66,7 @@ class FogClientApp(cliapp.Application):
         fog_host = self.settings["fog_host"]
         allow_reboot = self.settings["allow_reboot"]
         snapin_dir = self.settings["snapin_dir"]
-        return [client_snapin(fog_host, mac, snapin_dir, allow_reboot)
+        return [components.snapins(fog_host, mac, snapin_dir, allow_reboot)
                 for mac in get_macs()]
 
     def cmd_daemon(self, args):
@@ -85,7 +84,7 @@ class FogClientApp(cliapp.Application):
         scheduler.run()
 
 if __name__ == '__main__':
-    client_app = FogClientApp(version="0.3.2", description="""
+    client_app = FogClientApp(version="0.3", description="""
 Client for fog service made in python
 
 Currently only tested in ubuntu 12.04+""")

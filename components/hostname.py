@@ -2,7 +2,7 @@
 if needed"""
 
 import cuisine as c
-from fog_lib import FogRequester
+from fog_lib import FogRequester, file_write, file_update
 import logging
 
 
@@ -32,13 +32,13 @@ def get_hostname():
 
 def set_hostname(host):
     """Sets hostname to :host"""
+    def updater(contents):
+        return contents.replace(old, host)
     with c.mode_local():
         old = get_hostname()
         c.run("hostname " + host)
-        c.file_write("/etc/hostname", host)
-        hosts_old = c.file_read("/etc/hosts")
-        hosts_new = hosts_old.replace(old, host)
-        c.file_write("/etc/hosts", hosts_new)
+        file_write("/etc/hostname", host)
+        file_update("/etc/hosts", updater=updater)
         logging.info("Hostname changed from %s to %s", old, host)
 
 
@@ -68,4 +68,3 @@ def client_hostname(fog_host, mac):
     # except Exception as ex:
     #     logging.error(ex)
     return action, reboot
- 

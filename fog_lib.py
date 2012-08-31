@@ -57,6 +57,24 @@ class Scheduler(object):
         self.scheduler.run()
 
 
+def file_read(filename):
+    contents = open(filename, 'r').read()
+    return contents
+
+
+def file_write(filename, contents):
+    f = open(filename, 'w')
+    f.write(contents)
+
+
+def file_update(filename, updater):
+    with open(filename, 'r') as f_r:
+        contents = f_r.read()
+        updated = updater(contents)
+    with open(filename, 'w') as f_w:
+        f_w.write(updated)
+
+
 def logged_in():
     """Returns True is an user is logged in.
     At the moment only works on Ubuntu 12.04
