@@ -33,7 +33,6 @@ class GreenFogTask(object):
     @property
     def due_now(self):
         hours_to_task = self._hours_to(self.time_object)
-        print hours_to_task
         return -0.5 < hours_to_task < 0
 
     def _construct_time_object(self):

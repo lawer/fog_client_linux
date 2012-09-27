@@ -38,6 +38,9 @@ class FogClientApp(cliapp.Application):
         formatter = logging.Formatter(fmt, datefmt)
         handler.setFormatter(formatter)
 
+        requests_log = logging.getLogger("requests")
+        requests_log.setLevel(logging.WARNING)
+
         logger.addHandler(handler)
 
     def cmd_hostname(self, args):
