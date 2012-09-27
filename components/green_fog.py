@@ -8,14 +8,16 @@ class GreenFogRequester(FogRequester):
     """docstring for GreenFogRequester"""
     def _handler(self, text):
         if text != '':
-            return base64.b64decode(text)
+            hours = text.splitlines()
+            return [base64.b64decode(hour) for hour in hours]
         else:
             raise ValueError("No jobs pending")
 
     def get_green_fog_data(self):
         text = self.get_data(service="greenfog")
-        hour, minute, task_type = self._handler(text).split('@')
-        return hour, minute, task_type
+        hours = self._handler(text)
+        hours_minutes_task_types = [hour.split('@') for hour in hours]
+        return hours_minutes_task_types
 
 
 class GreenFogTask(object):
@@ -31,7 +33,8 @@ class GreenFogTask(object):
     @property
     def due_now(self):
         hours_to_task = self._hours_to(self.time_object)
-        return hours_to_task <= 1 and hours_to_task > 0
+        print hours_to_task
+        return -0.5 < hours_to_task < 0
 
     def _construct_time_object(self):
         now = datetime.datetime.now()
@@ -41,7 +44,7 @@ class GreenFogTask(object):
 
     def _hours_to(self, task_time):
         interval = task_time - datetime.datetime.now()
-        hours = interval.total_seconds() // 3600
+        hours = interval.total_seconds() / 3600
         return hours
 
 
@@ -50,15 +53,18 @@ def client_green_fog(fog_host, mac, allow_reboot):
                                    mac=mac)
     status, reboot = False, False
     try:
-        hour, minute, task_type = fog_server.get_green_fog_data()
-        task = GreenFogTask(hour, minute, task_type)
-        if task.due_now:
-            logging.info("Green Fog task pending,")
-            status, reboot = shutdown(mode=task.task_type,
-                                      allow_reboot=allow_reboot)
-        else:
-            logging.info("Green Fog Task due at " + task.hour)
-            status, reboot = False, False
+        hours_minutes_task_types = fog_server.get_green_fog_data()
+        tasks = [GreenFogTask(hour, minute, task_type)
+                 for hour, minute, task_type
+                 in hours_minutes_task_types]
+        for task in tasks:
+            if task.due_now:
+                logging.info("Green Fog task pending,")
+                status, reboot = shutdown(mode=task.task_type,
+                                          allow_reboot=allow_reboot)
+            else:
+                logging.info("Green Fog Task due at " + task.hour)
+                status, reboot = False, False
     except IOError as e:
         logging.info(e)
     except ValueError as e:
