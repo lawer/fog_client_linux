@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='fog_client',
-    version='0.3.13',
+    version='0.4',
     author='Carles Gonzalez',
     packages=['components', 'cliapp'],
     py_modules=['fog_lib', 'fog_client'],
