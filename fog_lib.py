@@ -88,7 +88,7 @@ def logged_in():
         return True
 
 
-def shutdown(mode="reboot", allow_reboot=False):
+def shutdown(mode="reboot", allow_reboot=True):
     """Shutdowns or reboots the computer if allow reboot == True."""
     if logged_in():
         logging.info("Logged in, not rebooting")
