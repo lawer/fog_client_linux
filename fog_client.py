@@ -71,6 +71,14 @@ class FogClientApp(cliapp.Application):
         snapin_dir = self.settings["snapin_dir"]
         return [components.snapins(fog_host, mac, snapin_dir, allow_reboot)
                 for mac in get_macs()]
+                
+    def cmd_logins(self, args):
+        """Sets in server logins and loguts
+        """
+        fog_host = self.settings["fog_host"]
+        return [components.logins(fog_host, mac) for mac in get_macs()]
+
+
 
     def cmd_daemon(self, args):
         """Starts the service in daemon mode.
