@@ -1,9 +1,10 @@
 import cuisine as c
 from fog_lib import FogRequester
+
 import logging
 import pprint
 import base64
-
+import itertools
 from logsparser.lognormalizer import LogNormalizer as LN
  
 class LoginsRequester(FogRequester):
@@ -18,62 +19,82 @@ class LoginsRequester(FogRequester):
     def _data(self, date):
         return base64.b64encode(str(date))
 
-
-    def set_login_data(self, logins):
-        "Returns hostname saved on fog server"
-        
-        for login in logins:
+    def _set_login_data(self, login, last_logged_date):
             params = dict(service="usertracking.report", 
                           user=self._user(login["user"]),
                           date=self._data(login["date"])
-                     )
+            )
             if login["action"] == "open":
                 params["action"] = base64.b64encode("login")
                 
             text = self.get_data(**params)
-            aux = self._handler(text)
-            print aux
-        return aux
+                        
+            if text == self.FOG_OK and login["date"]>last_logged_date:
+                save_last_logged(login)
+            print text
 
 
-def client_hostname(fog_host, mac):
-    """Main function for this module"""
-    fog_server = HostnameRequester(fog_host=fog_host, mac=mac)
-    action, reboot = False, False
+    def set_logins_data(self, logins, last_logged_date):
+        "Returns hostname saved on fog server"
+        
+        for login in logins:
+            self._set_login_data(login, last_logged_date)
+
+        return True
+
+
+def save_last_logged(login):
+    date = login["date"]
+    with open("/var/lib/fog_client_linux_last_log", "w") as file:
+        file.write(str(date))
+        
+
+def load_last_logged():
+    import datetime
     try:
-        hostname = fog_server.get_hostname_data()
-        action, reboot = ensure_hostname(hostname)
-    except IOError as ex:
-        logging.error(ex)
-    except ValueError as ex:
-        logging.error(ex)
-    # except Exception as ex:
-    #     logging.error(ex)
-    return action, reboot
+        with open("/var/lib/fog_client_linux_last_log", "r") as file:
+            date_string = file.read()
+            return datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+    except:
+        return datetime.datetime.min
+        
+
+def obtain_logins():
+    normalizer = LN('/usr/local/share/logsparser/normalizers')
+    auth_logs = open('/var/log/auth.log', 'r')
+
+    logs = [{'raw': l} for l in auth_logs]
+    map(normalizer.lognormalize, logs)
     
+    logins = (log for log in logs 
+              if log.get('action') == 'open' 
+              or log.get('action') == 'close')
+              
+    logins_users = (log for log in logins 
+                    if log.get('program') != 'sudo' 
+                    and log.get('program') != 'cron')
+ 
+    return logins_users
+
+
+def logins_to_insert(logins, last_logged_date):
+    return [login for login in logins 
+            if login["date"] > last_logged_date]
+
 
 def client_logins(fog_host, mac):
     """Main function for this module"""
     
-    normalizer = LN('/usr/local/share/logsparser/normalizers')
-    auth_logs = open('/var/log/auth.log', 'r')
+    last_logged_date = load_last_logged()
     
-    print mac
- 
-    logins_logouts = []
-    for l in auth_logs:
-        log = {'raw' : l } # a LogNormalizer expects input as a dictionary
-        normalizer.lognormalize(log)
+    logins_logouts = obtain_logins()
+    logins = logins_to_insert(logins_logouts, last_logged_date)
         
-        action = log.get('action')
-        program = log.get('program')
-        
-        if (action == 'open' or action == 'close'):
-            if(program != 'sudo' and program != 'cron'):
-                logins_logouts.append(log)
-                
-        
-    fog_requester = LoginsRequester(fog_host=fog_host, mac=base64.b64encode(mac))
-    fog_requester.set_login_data(logins_logouts)
+    if len(logins)>0:
+        fog_requester = LoginsRequester(fog_host=fog_host, 
+                                        mac=base64.b64encode(mac))
+        fog_requester.set_logins_data(logins, last_logged_date)
+    else:
+        logging.info("No logins to notify server")
 
-    pass
+    return True

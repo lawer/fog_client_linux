@@ -79,7 +79,6 @@ class FogClientApp(cliapp.Application):
         return [components.logins(fog_host, mac) for mac in get_macs()]
 
 
-
     def cmd_daemon(self, args):
         """Starts the service in daemon mode.
         By default configuration is loaded from /etc/fog_client.ini.
@@ -92,6 +91,8 @@ class FogClientApp(cliapp.Application):
         scheduler.schedule(self.cmd_green_fog, interval, arguments)
         scheduler.schedule(self.cmd_task_reboot, interval, arguments)
         scheduler.schedule(self.cmd_snapins, interval, arguments)
+        scheduler.schedule(self.cmd_logins, interval, arguments)
+
         scheduler.run()
 
 if __name__ == '__main__':
