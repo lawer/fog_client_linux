@@ -23,5 +23,6 @@ cliapp/settings_tests.py
 components/__init__.py
 components/green_fog.py
 components/hostname.py
+components/logins.py
 components/snapins.py
 components/task_reboot.py
