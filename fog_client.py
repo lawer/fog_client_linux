@@ -2,9 +2,10 @@
 """Client for fog service made in python
 Currently only tested in ubuntu 12.04+"""
 import cliapp
-import logging
 import components
 from fog_lib import get_macs, Scheduler
+
+import logging
 
 
 class FogClientApp(cliapp.Application):
@@ -43,55 +44,61 @@ class FogClientApp(cliapp.Application):
 
         logger.addHandler(handler)
 
+    def _load_settings(self):
+        self.fog_host = self.settings["fog_host"]
+        self.allow_reboot = self.settings["allow_reboot"]
+        self.snapin_dir = self.settings["snapin_dir"]
+        self.interval = self.settings["interval"]
+
     def cmd_hostname(self, args):
         """Sets local hostname to the value saved in fog server"""
-        fog_host = self.settings["fog_host"]
-        return [components.hostname(fog_host, mac) for mac in get_macs()]
+        self._load_settings()
+        return [components.hostname(self.fog_host, mac) for mac in get_macs()]
 
     def cmd_green_fog(self, args):
         """Shutdowns or reboots the computer at times set in fog server"""
-        fog_host = self.settings["fog_host"]
-        allow_reboot = self.settings["allow_reboot"]
-        return [components.green_fog(fog_host, mac, allow_reboot)
+        self._load_settings()
+        return [components.green_fog(self.fog_host, mac, self.allow_reboot)
                 for mac in get_macs()]
 
     def cmd_task_reboot(self, args):
         """Reboots the computer if there is an imaging task waiting"""
-        fog_host = self.settings["fog_host"]
-        allow_reboot = self.settings["allow_reboot"]
-        return [components.task_reboot(fog_host, mac, allow_reboot)
+        self._load_settings()
+        return [components.task_reboot(self.fog_host, mac, self.allow_reboot)
                 for mac in get_macs()]
 
     def cmd_snapins(self, args):
         """Downloads and installs the first snapin waiting in the server
            Subsequential runs of the command could be needed.
         """
-        fog_host = self.settings["fog_host"]
-        allow_reboot = self.settings["allow_reboot"]
-        snapin_dir = self.settings["snapin_dir"]
-        return [components.snapins(fog_host, mac, snapin_dir, allow_reboot)
+        self._load_settings()
+        return [components.snapins(self.fog_host, mac,
+                                   self.snapin_dir, self.allow_reboot)
                 for mac in get_macs()]
-                
+
     def cmd_logins(self, args):
         """Sets in server logins and loguts
         """
-        fog_host = self.settings["fog_host"]
-        return [components.logins(fog_host, mac) for mac in get_macs()]
-
+        self._load_settings()
+        return [components.logins(self.fog_host, mac) for mac in get_macs()]
 
     def cmd_daemon(self, args):
         """Starts the service in daemon mode.
         By default configuration is loaded from /etc/fog_client.ini.
         """
-        interval = self.settings["interval"]
+        self._load_settings()
+
         arguments = [args]
 
+        commands = [self.cmd_hostname,
+                    self.cmd_green_fog,
+                    self.cmd_task_reboot,
+                    self.cmd_snapins,
+                    self.cmd_logins]
+
         scheduler = Scheduler()
-        scheduler.schedule(self.cmd_hostname, interval, arguments)
-        scheduler.schedule(self.cmd_green_fog, interval, arguments)
-        scheduler.schedule(self.cmd_task_reboot, interval, arguments)
-        scheduler.schedule(self.cmd_snapins, interval, arguments)
-        scheduler.schedule(self.cmd_logins, interval, arguments)
+        for command in commands:
+            scheduler.schedule(command, self.interval, arguments)
 
         scheduler.run()
 
