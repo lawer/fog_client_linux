@@ -96,7 +96,7 @@ class FogClientApp(cliapp.Application):
         scheduler.run()
 
 if __name__ == '__main__':
-    client_app = FogClientApp(version="0.4", description="""
+    client_app = FogClientApp(version="0.5", description="""
 Client for fog service made in python
 
 Currently only tested in ubuntu 12.04+""")
