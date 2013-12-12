@@ -2,7 +2,6 @@
 import cuisine as c
 import requests
 import re
-import os
 import logging
 import sched
 import time
@@ -75,15 +74,40 @@ def file_update(filename, updater):
         f_w.write(updated)
 
 
+def obtain_logins():
+    from logsparser.lognormalizer import LogNormalizer as LN
+
+    normalizer = LN('/usr/local/share/logsparser/normalizers')
+    auth_logs = open('/var/log/auth.log', 'r')
+
+    logs = [{'raw': l} for l in auth_logs]
+    map(normalizer.lognormalize, logs)
+
+    logins = (log for log in logs
+              if log.get('action') == 'open'
+              or log.get('action') == 'close')
+
+    logins_users = (log for log in logins
+                    if log.get('program') != 'sudo'
+                    and log.get('program') != 'cron')
+
+    return logins_users
+
+
 def logged_in():
     """Returns True is an user is logged in.
     At the moment only works on Ubuntu 12.04
     """
     try:
-        if ':0' in os.listdir('/var/run/lightdm/root'):
-            return True
-        else:
-            return False
+        logins_ligthdm = (log for log in obtain_logins()
+                          if log.get('program') == 'lightdm'
+                          and log.get('user') != 'lightdm')
+        reversed_logins = reversed(list(logins_ligthdm))
+        for log in reversed_logins:
+            if log.get('action') == 'open':
+                return True
+            else:
+                return False
     except OSError:
         return True
 
