@@ -124,7 +124,7 @@ def shutdown(mode="reboot", allow_reboot=True):
             with c.mode_local():
                 with c.mode_sudo():
                     if mode == "reboot":
-                        c.run("reboot")
+                        c.run("reboot -f")
                     else:
                         c.run("halt")
     return status, reboot
