@@ -102,6 +102,23 @@ class FogClientApp(cliapp.Application):
 
         scheduler.run()
 
+    def cmd_all(self, args):
+        """Execs all commands.
+        """
+        self._load_settings()
+
+        arguments = [args]
+
+        commands = [self.cmd_hostname,
+                    self.cmd_green_fog,
+                    self.cmd_task_reboot,
+                    self.cmd_snapins,
+                    self.cmd_logins]
+
+        for command in commands:
+            command(arguments)
+
+
 if __name__ == '__main__':
     client_app = FogClientApp(version="0.6.1", description="""
 Client for fog service made in python
