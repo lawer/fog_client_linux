@@ -7,6 +7,8 @@ aux/fog_client.ini
 cliapp/__init__.py
 cliapp/app.py
 cliapp/app_tests.py
+cliapp/fmt.py
+cliapp/fmt_tests.py
 cliapp/genman.py
 cliapp/hook.py
 cliapp/hook_tests.py

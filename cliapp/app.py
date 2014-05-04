@@ -299,7 +299,7 @@ class Application(object):
             if cmd not in self.subcommands:
                 raise cliapp.AppException('Unknown subcommand %s' % cmd)
             usage = self._format_usage_for(cmd)
-            fmt = self.get_help_text_formatter(width=width)
+            fmt = self.get_subcommand_help_formatter(width=width)
             description = fmt.format(self._format_subcommand_help(cmd))
             text = '%s\n\n%s' % (usage, description)
         else:
@@ -400,16 +400,7 @@ class Application(object):
         if self.settings['log'] == 'syslog':
             handler = self.setup_logging_handler_for_syslog()
         elif self.settings['log'] and self.settings['log'] != 'none':
-            handler = LogHandler(
-                            self.settings['log'],
-                            perms=int(self.settings['log-mode'], 8),
-                            maxBytes=self.settings['log-max'],
-                            backupCount=self.settings['log-keep'],
-                            delay=False)
-            fmt = '%(asctime)s %(levelname)s %(message)s'
-            datefmt = '%Y-%m-%d %H:%M:%S'
-            formatter = logging.Formatter(fmt, datefmt)
-            handler.setFormatter(formatter)
+            handler = self.setup_logging_handler_for_file()
         else:
             handler = self.setup_logging_handler_to_none()
             # reduce amount of pointless I/O
@@ -423,33 +414,41 @@ class Application(object):
         '''Setup a logging.Handler for logging to syslog.'''
 
         handler = logging.handlers.SysLogHandler(address='/dev/log')
-        progname = '%%'.join(self.settings.progname.split('%'))
-        fmt = progname + ": %(levelname)s %(message)s"
-        formatter = logging.Formatter(fmt)
+        formatter = self.setup_logging_formatter_for_syslog()
         handler.setFormatter(formatter)
 
         return handler
+
+    def setup_logging_formatter_for_syslog(self): # pragma: no cover
+        '''Setup a logging.Formatter for syslog.'''
+        progname = '%%'.join(self.settings.progname.split('%'))
+        fmt = progname + ": %(levelname)s %(message)s"
+        return logging.Formatter(fmt)
+
+    def setup_logging_handler_for_file(self): # pragma: no cover
+        '''Setup a logging handler for logging to a named file.'''
+
+        handler = LogHandler(
+            self.settings['log'],
+            perms=int(self.settings['log-mode'], 8),
+            maxBytes=self.settings['log-max'],
+            backupCount=self.settings['log-keep'],
+            delay=False)
+        formatter = self.setup_logging_formatter_for_file()
+        handler.setFormatter(formatter)
+        return handler
+
+    def setup_logging_formatter_for_file(self): # pragma: no cover
+        '''Setup a logging.Formatter for logging to a file.'''
+        fmt = '%(asctime)s %(levelname)s %(message)s'
+        datefmt = '%Y-%m-%d %H:%M:%S'
+        formatter = logging.Formatter(fmt, datefmt)
+        return formatter
 
     def setup_logging_handler_to_none(self): # pragma: no cover
         '''Setup a logging.Handler that does not log anything anywhere.'''
 
         handler = logging.FileHandler('/dev/null')
-        return handler
-
-    def setup_logging_handler_to_file(self): # pragma: no cover
-        '''Setup a logging.Handler for logging to a named file.'''
-
-        handler = LogHandler(
-                        self.settings['log'],
-                        perms=int(self.settings['log-mode'], 8),
-                        maxBytes=self.settings['log-max'],
-                        backupCount=self.settings['log-keep'],
-                        delay=False)
-        fmt = self.setup_logging_format()
-        datefmt = self.setup_logging_timestamp()
-        formatter = logging.Formatter(fmt, datefmt)
-        handler.setFormatter(formatter)
-
         return handler
 
     def setup_logging_format(self): # pragma: no cover

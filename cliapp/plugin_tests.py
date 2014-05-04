@@ -40,9 +40,6 @@ class PluginTests(unittest.TestCase):
     def test_enable_raises_exception(self):
         self.assertRaises(Exception, self.plugin.enable)
 
-    def test_disable_raises_exception(self):
-        self.assertRaises(Exception, self.plugin.disable)
-
     def test_enable_wrapper_calls_enable(self):
         self.plugin.enable = lambda: setattr(self, 'enabled', True)
         self.plugin.enable_wrapper()
