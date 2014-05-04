@@ -120,7 +120,7 @@ class FogClientApp(cliapp.Application):
 
 
 if __name__ == '__main__':
-    client_app = FogClientApp(version="0.6.1", description="""
+    client_app = FogClientApp(version="0.6.2", description="""
 Client for fog service made in python
 
 Currently only tested in ubuntu 12.04+""")
