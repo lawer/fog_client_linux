@@ -126,3 +126,5 @@ Client for fog service made in python
 Currently only tested in ubuntu 12.04+""")
     client_app.settings.config_files = ["/etc/fog_client.ini"]
     client_app.run()
+    print client_app.pluginmgr.plugins
+
