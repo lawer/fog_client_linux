@@ -140,3 +140,33 @@ def get_macs():
                 for line in ifconfig.splitlines()
                 if 'HW' in line and 'eth' in line)
         return macs
+
+def get_hostname():
+    """Return current hostname"""
+    with c.mode_local():
+        host = c.run("hostname")
+        return host.strip()
+
+
+def set_hostname(host):
+    """Sets hostname to :host"""
+    def updater(contents):
+        return contents.replace(old, host)
+    with c.mode_local():
+        old = get_hostname()
+        c.run("hostname " + host)
+        file_write("/etc/hostname", host)
+        file_update("/etc/hosts", updater=updater)
+        logging.info("Hostname changed from %s to %s", old, host)
+
+
+def ensure_hostname(host):
+    "Ensures that hostname is :host"
+    old = get_hostname()
+    if old != host:
+        with c.mode_sudo():
+            set_hostname(host)
+        return True, True
+    else:
+        logging.info("Hostname was not changed")
+        return False, False
