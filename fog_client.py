@@ -50,11 +50,6 @@ class FogClientApp(cliapp.Application):
         self.snapin_dir = self.settings["snapin_dir"]
         self.interval = self.settings["interval"]
 
-    # def cmd_hostname(self, args):
-    #     """Sets local hostname to the value saved in fog server"""
-    #     self._load_settings()
-    #     return [components.hostname(self.fog_host, mac) for mac in get_macs()]
-
     def cmd_green_fog(self, args):
         """Shutdowns or reboots the computer at times set in fog server"""
         self._load_settings()
@@ -120,8 +115,3 @@ Client for fog service made in python
 Currently only tested in ubuntu 12.04+""")
     client_app.settings.config_files = ["/etc/fog_client.ini"]
     client_app.run()
-
-    # import pprint
-    # pprint.pprint(client_app.subcommands)
-    # print client_app.pluginmgr.plugins
-
