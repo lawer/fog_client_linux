@@ -50,12 +50,6 @@ class FogClientApp(cliapp.Application):
         self.snapin_dir = self.settings["snapin_dir"]
         self.interval = self.settings["interval"]
 
-    def cmd_green_fog(self, args):
-        """Shutdowns or reboots the computer at times set in fog server"""
-        self._load_settings()
-        return [components.green_fog(self.fog_host, mac, self.allow_reboot)
-                for mac in get_macs()]
-
     def cmd_task_reboot(self, args):
         """Reboots the computer if there is an imaging task waiting"""
         self._load_settings()
@@ -97,8 +91,6 @@ class FogClientApp(cliapp.Application):
     def cmd_all(self, args):
         """Execs all commands.
         """
-        self._load_settings()
-
         arguments = [args]
 
         commands = [self.subcommands[index] for index in self.subcommands
