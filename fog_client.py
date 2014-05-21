@@ -2,6 +2,8 @@
 """Client for fog service made in python
 Currently only tested in ubuntu 12.04+"""
 import cliapp
+import filelock
+
 import components
 from fog_lib import get_macs, Scheduler
 
@@ -85,19 +87,26 @@ class FogClientApp(cliapp.Application):
     def cmd_all(self, args):
         """Execs all commands.
         """
-        self._load_settings()
+        try:
+            with filelock.FileLock("/tmp/fog_client.lock", timeout=60):
+                self._load_settings()
+                arguments = [args]
 
-        arguments = [args]
+                commands = [self.subcommands[index]
+                            for index in self.subcommands
+                            if index not in (
+                                "all", "daemon", "help", "help-all"
+                            )]
 
-        commands = [self.subcommands[index] for index in self.subcommands
-                    if index not in ("all", "daemon", "help", "help-all")]
+                for command in commands:
+                    command(arguments)
 
-        for command in commands:
-            command(arguments)
+        except filelock.FileLockException:
+            print "Locked"
 
 
 if __name__ == '__main__':
-    client_app = FogClientApp(version="0.6.3", description="""
+    client_app = FogClientApp(version="0.6.4", description="""
 Client for fog service made in python
 
 Currently only tested in ubuntu 12.04+""")
