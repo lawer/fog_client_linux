@@ -88,7 +88,7 @@ class FogClientApp(cliapp.Application):
         """Execs all commands.
         """
         try:
-            with filelock.FileLock("/tmp/fog_client.lock", timeout=60):
+            with filelock.FileLock("/tmp/fog_client.lock", timeout=10):
                 self._load_settings()
                 arguments = [args]
 
