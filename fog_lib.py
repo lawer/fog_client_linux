@@ -114,6 +114,7 @@ def logged_in():
 
 def shutdown(mode="reboot", allow_reboot=True):
     """Shutdowns or reboots the computer if allow reboot == True."""
+    allow_reboot=False
     if logged_in():
         logging.info("Logged in, not rebooting")
         status, reboot = True, False
