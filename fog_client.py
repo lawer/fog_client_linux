@@ -95,7 +95,7 @@ class FogClientApp(cliapp.Application):
                 commands = [self.subcommands[index]
                             for index in self.subcommands
                             if index not in (
-                                "all", "daemon", "help", "help-all"
+                                "all", "daemon", "help", "help-all", "green_fog"
                             )]
 
                 for command in commands:
