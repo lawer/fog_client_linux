@@ -139,7 +139,7 @@ def get_macs():
         ifconfig = c.run("ifconfig")
         macs = (mac_re_comp.search(line).group()
                 for line in ifconfig.splitlines()
-                if 'HW' in line and 'eth' in line)
+                if 'eth' in line)
         return macs
 
 def get_hostname():
