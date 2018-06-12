@@ -167,6 +167,7 @@ def ensure_hostname(host):
     if old != host:
         with c.mode_sudo():
             set_hostname(host)
+            c.run("install-salt")
         return True, True
     else:
         logging.info("Hostname was not changed")
